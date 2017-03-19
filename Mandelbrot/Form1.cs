@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Numerics;
+using System.Diagnostics;
 
 namespace Mandelbrot
 {
@@ -28,8 +29,7 @@ namespace Mandelbrot
             Point pos = new Point(Convert.ToInt32(c.Real + rect.Width / 2), 
                                   rect.Height - Convert.ToInt32(c.Imaginary + rect.Height / 2));
 
-            Graphics g = CreateGraphics();
-            g.FillRectangle(brush, pos.X, pos.Y, 1, 1);
+            e.Graphics.FillRectangle(brush, pos.X, pos.Y, 1, 1);
         }
 
         private uint? GetMandelbrotDivergePoint(Complex c, uint n)
@@ -41,11 +41,24 @@ namespace Mandelbrot
                 z = z * z + c;
                 if (Complex.Abs(z) > 2)
                 {
-                    return n;
+                    return i;
                 }
             }
 
             return null;
+        }
+
+        int IntPow(int x, uint pow)
+        {
+            int ret = 1;
+            while (pow != 0)
+            {
+                if ((pow & 1) == 1)
+                    ret *= x;
+                x *= x;
+                pow >>= 1;
+            }
+            return ret;
         }
 
         private void DrawMandelbrot(Rectangle rect, PaintEventArgs e, uint n, int xMove, int yMove, uint zoom)
@@ -57,7 +70,14 @@ namespace Mandelbrot
                     uint? result = GetMandelbrotDivergePoint(new Complex((x - rect.Width / 2) + xMove, ((y - rect.Height / 2)) + yMove) / zoom, n);
                     if (!result.HasValue)
                     {
-                        DrawComplexPoint(new Complex((x - rect.Width / 2), (y - rect.Height / 2)), e, rect, Brushes.Blue);
+                        DrawComplexPoint(new Complex((x - rect.Width / 2), (y - rect.Height / 2)), e, rect, Brushes.White);
+                    }
+                    else
+                    {
+                        int nsmooth = IntPow(Convert.ToInt32(result), 2) % 255;
+                        Brush brush = new SolidBrush(Color.FromArgb(255, nsmooth, nsmooth, nsmooth));
+
+                        DrawComplexPoint(new Complex((x - rect.Width / 2), (y - rect.Height / 2)), e, rect, brush);
                     }
                 }
             }
@@ -76,19 +96,19 @@ namespace Mandelbrot
         {
             if(e.KeyCode == Keys.Left)
             {
-                XMove -= 10;
+                XMove -= 50;
             }
             else if(e.KeyCode == Keys.Right)
             {
-                XMove += 10;
+                XMove += 50;
             }
             else if(e.KeyCode == Keys.Up)
             {
-                YMove += 10;
+                YMove += 50;
             }
             else if(e.KeyCode == Keys.Down)
             {
-                YMove -= 10;
+                YMove -= 50;
             }
 
             this.Invalidate();
