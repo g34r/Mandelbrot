@@ -15,7 +15,7 @@ namespace Mandelbrot
     public partial class Mandelbrot : Form
     {
         private int XMove = 0, YMove = 0;
-        private uint Zoom = 100;
+        private uint Zoom = 1000;
 
         public Mandelbrot()
         {
@@ -24,7 +24,7 @@ namespace Mandelbrot
             this.Height = 400;
         }
 
-        private void DrawComplexPoint(Complex c, PaintEventArgs e, Rectangle rect, Brush brush)
+        private void DrawComplexPoint(Complex c, BufferedGraphics e, Rectangle rect, Brush brush)
         {
             Point pos = new Point(Convert.ToInt32(c.Real + rect.Width / 2), 
                                   rect.Height - Convert.ToInt32(c.Imaginary + rect.Height / 2));
@@ -61,7 +61,7 @@ namespace Mandelbrot
             return ret;
         }
 
-        private void DrawMandelbrot(Rectangle rect, PaintEventArgs e, uint n, int xMove, int yMove, uint zoom)
+        private void DrawMandelbrot(Rectangle rect, BufferedGraphics e, uint n, int xMove, int yMove, uint zoom)
         {
             for (uint x = 0; x < rect.Width; x++)
             {
@@ -89,26 +89,34 @@ namespace Mandelbrot
             e.Graphics.DrawLine(Pens.Black, new Point(rect.Width / 2, 0), new Point(rect.Width / 2, rect.Height));
             e.Graphics.DrawLine(Pens.Black, new Point(0, rect.Height / 2), new Point(rect.Width, rect.Height / 2));
 
-            DrawMandelbrot(rect, e, 1000, XMove, YMove, Zoom);
+            BufferedGraphicsContext currentContext;
+            BufferedGraphics myBuffer;
+            currentContext = BufferedGraphicsManager.Current;
+            myBuffer = currentContext.Allocate(this.CreateGraphics(),
+               this.DisplayRectangle);
+
+            DrawMandelbrot(rect, myBuffer, 1000, XMove, YMove, Zoom);
+            myBuffer.Render();
+            myBuffer.Dispose();
         }
 
         private void Mandelbrot_KeyDown(object sender, KeyEventArgs e)
         {
             if(e.KeyCode == Keys.Left)
             {
-                XMove -= 50;
+                XMove -= 100;
             }
             else if(e.KeyCode == Keys.Right)
             {
-                XMove += 50;
+                XMove += 100;
             }
             else if(e.KeyCode == Keys.Up)
             {
-                YMove += 50;
+                YMove += 100;
             }
             else if(e.KeyCode == Keys.Down)
             {
-                YMove -= 50;
+                YMove -= 100;
             }
 
             this.Invalidate();
@@ -118,11 +126,11 @@ namespace Mandelbrot
         {
             if (e.Button == MouseButtons.Left)
             {
-                Zoom += 100;
+                Zoom += 50;
             }
             else if(Zoom > 10)
             {
-                Zoom -= 100;
+                Zoom -= 50;
             }
 
             this.Invalidate();
